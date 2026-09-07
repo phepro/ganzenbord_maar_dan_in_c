@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 // #include <ctype.h>
 
 #define MAX_PLAYERS 10
@@ -8,27 +9,23 @@
 char names[MAX_PLAYERS][10] = {"robert", "sam", "anne", "tom", "chiel", "teun", "piet", "jantje", "tux", "maria"};
 int locations[MAX_PLAYERS] = {12, 35, 24, 55, 18}; 
 
-bool game_running = true;
+int current_player_game_loop = 0;
+int player_amount;
 
 void quit_interact();
 void update_player_location (int current_player, int value_to_add);
+void print_player_names (int player_amount);
 
-typedef struct {
-    int location;
-    //char name[10];
-    char *name;
-} player_t;
 
 struct player {
     int location;
-    char *name;
+    char name[10];
 } players[MAX_PLAYERS];
 
 struct board {
     int size;  
 };
 
-// player_t players[MAX_PLAYERS];
 
 int create_random_value(int min, int max) {
     int value = rand() % (max - min + 1) + min;
@@ -37,11 +34,13 @@ int create_random_value(int min, int max) {
 }
 
 int set_player_amount () {
+    char amount_as_char[10];
     int amount;
     while (true) {
         printf("How many players (Maximum 10): \n");
 
-        scanf("%d", &amount);
+        fgets(amount_as_char, sizeof(amount_as_char), stdin);
+        amount = atoi(amount_as_char);
 
         if (amount >= MAX_PLAYERS) {
             printf("To many players!\n");
@@ -122,25 +121,52 @@ void quit_interact () {
     }
 }
 
-void init_players (int player_amount) {
+void name_newline_to_null_terminator (int current_player) {
+    int player_name_len = strlen(players[current_player].name);
+    for (int i = 0; i < player_name_len; i++) {
+        if (players[current_player].name[i] == '\n') {
+            players[current_player].name[i] = '\0';
+        }
+    } 
+}
+
+void print_player_names_debug (int quit_or_not) {
     for (int i = 0; i < player_amount; i++) {
-        char name[10];
+        printf("Player %d = %s\n", i+1, players[i].name);        
+    }
+    
+    if (quit_or_not == 1) {
+        exit(1);
+    }
+}
+
+void init_players () {
+    char name[10];
+
+    for (int i = 0; i < player_amount; i++) {
         players[i].location = 1;
         
         
         printf("What is your name player %d\n", i+1);
-        scanf("%s", name);
-        
+        fgets(name, sizeof(name), stdin);
 
-        players[i].name = name;
+        strncpy(players[i].name, name, 9);
+        
+        name_newline_to_null_terminator(i);
+
+        //players[i].name[9] = '\0';
+
+        //players[i].name = name;
         //players[i].name = names[i];
 
         printf("%d\n", players[i].location);
         printf("%s\n\n", players[i].name);
     }
+
+    print_player_names_debug(0);
 }
 
-void print_player_names (int current_spot, int player_amount) {
+void print_player_names_on_board (int current_spot) {
     for (int i = 0; i < player_amount; i++) {
         if (players[i].location == current_spot) {
             printf("%s (Player %d)", players[i].name, i+1);
@@ -153,40 +179,43 @@ void print_player_names (int current_spot, int player_amount) {
 
 }
 
-void print_board (int board_size, int player_amount) {
+void print_board (int board_size) {
     for (int i = 1; i <= board_size; i ++) {
         printf("%d: ", i);
 
-        print_player_names(i, player_amount);
+        print_player_names_on_board(i);
 
         printf("\n");
     }
+
+    printf("Player %d (%s), on position %d\n", current_player_game_loop+1, players[current_player_game_loop].name, players[current_player_game_loop].location);
 }
 
+void game_setup() {
+    
+    player_amount = set_player_amount();
+
+    init_players();
+}
 
 int main () {
     struct board b;
     b.size = 63;
 
+    game_setup();   
 
-    int current_player = 0;
-    
-    int p_a = set_player_amount();
+    while (true) {
+        print_board(b.size);
+        roll_interact(current_player_game_loop);
 
-    init_players(p_a);
+        check_if_won(current_player_game_loop, b.size);
 
-    while (game_running == true) {
-        print_board(b.size, p_a);
-        roll_interact(current_player);
-
-        check_if_won(current_player, b.size);
-
-        if (current_player == p_a) {
-            current_player = 0;
+        if (current_player_game_loop == player_amount) {
+            current_player_game_loop = 0;
         }
 
         else {
-            current_player++;
+            current_player_game_loop++;
         }
     }
 
