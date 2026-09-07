@@ -15,6 +15,7 @@ int player_amount;
 void quit_interact();
 void update_player_location (int current_player, int value_to_add);
 void print_player_names (int player_amount);
+void print_player_names_debug (int quit_or_not);
 
 
 struct player {
@@ -54,6 +55,8 @@ int set_player_amount () {
 
 void roll_interact (int current_player) {
     while (true) {
+        print_player_names_debug(0);
+
         char answer = 'p';
         int rolled_value;
     
@@ -205,12 +208,14 @@ int main () {
     game_setup();   
 
     while (true) {
+        //printf("\x1B[2J");
+
         print_board(b.size);
         roll_interact(current_player_game_loop);
 
         check_if_won(current_player_game_loop, b.size);
 
-        if (current_player_game_loop == player_amount) {
+        if (current_player_game_loop == player_amount-1) {
             current_player_game_loop = 0;
         }
 
