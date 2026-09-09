@@ -5,9 +5,6 @@
 
 #define MAX_PLAYERS 10
 
-// names and locations only for testing
-char names[MAX_PLAYERS][10] = {"robert", "sam", "anne", "tom", "chiel", "teun", "piet", "jantje", "tux", "maria"};
-int locations[MAX_PLAYERS] = {12, 35, 24, 55, 18}; 
 
 int current_player_game_loop = 0;
 int player_amount;
@@ -24,8 +21,11 @@ struct player {
 } players[MAX_PLAYERS];
 
 struct board {
-    int size;  
+    int size;
+    int thorn_bush;
 };
+
+struct board board;
 
 
 int create_random_value(int min, int max) {
@@ -55,19 +55,13 @@ int set_player_amount () {
 
 void roll_interact (int current_player) {
     while (true) {
-        print_player_names_debug(0);
+        //print_player_names_debug(0);
 
         char answer = 'p';
         int rolled_value;
     
         printf("Do you want to roll?(yY/nN)\n");
-        //int val;  
-        //val = 
         scanf(" %c", &answer);
-        // fgets(answer, sizeof(answer), stdin);
-        
-        //printf("Value scanf: %d\n", val);
-        //printf("Value answer: %c\n", answer);
 
         if (answer == 'y' || answer == 'Y') {
             rolled_value = create_random_value(0, 6);
@@ -79,12 +73,6 @@ void roll_interact (int current_player) {
         else if (answer == 'n' || answer == 'N') {
             quit_interact();
         }
-
-        /*
-        else if ( (int) answer == NULL) {
-            printf("answer is NULL");
-        }
-        */
 
         else {
             printf("%c is not a correct value...", answer);
@@ -98,10 +86,16 @@ void update_player_location (int current_player, int value_to_add) {
     players[current_player].location = new_location;
 }
 
-void check_if_won (int current_player, int board_size) {
-    if (players[current_player].location > board_size) {
+void check_if_won (int current_player) {
+    if (players[current_player].location > board.size) {
         printf("%s won !!!", players[current_player].name);
         exit(0);
+    }
+}
+
+void check_if_bush(int current_player) {
+    if (players[current_player].location == board.thorn_bush) {
+        int value = create_random_value(1, board.size-players[current_player]);
     }
 }
 
@@ -157,38 +151,39 @@ void init_players () {
         
         name_newline_to_null_terminator(i);
 
-        //players[i].name[9] = '\0';
-
-        //players[i].name = name;
-        //players[i].name = names[i];
-
-        printf("%d\n", players[i].location);
-        printf("%s\n\n", players[i].name);
+        //printf("%d\n", players[i].location);
+        //printf("%s\n\n", players[i].name);
     }
 
-    print_player_names_debug(0);
+    //print_player_names_debug(0);
 }
 
 void print_player_names_on_board (int current_spot) {
     for (int i = 0; i < player_amount; i++) {
         if (players[i].location == current_spot) {
-            printf("%s (Player %d)", players[i].name, i+1);
-            if (i != player_amount - 1) {
-                printf(", ");
-            }
+            printf("%s (Player %d)\n", players[i].name, i+1);
         }
-        
     }
 
 }
 
-void print_board (int board_size) {
-    for (int i = 1; i <= board_size; i ++) {
-        printf("%d: ", i);
+void create_thorn_bush() {
+    board.thorn_bush = create_random_value(2, board.size); 
+}
 
+void print_thorn_bush(int current_spot) {
+    if (current_spot == board.thorn_bush) {
+        printf("Thorn bush\n");
+    }
+}
+
+void print_board () {
+    for (int i = 1; i <= board.size; i ++) {
+        printf("%d:\n", i);
+        
+        print_thorn_bush(i);
         print_player_names_on_board(i);
 
-        printf("\n");
     }
 
     printf("Player %d (%s), on position %d\n", current_player_game_loop+1, players[current_player_game_loop].name, players[current_player_game_loop].location);
@@ -199,21 +194,21 @@ void game_setup() {
     player_amount = set_player_amount();
 
     init_players();
+    create_thorn_bush();
 }
 
 int main () {
-    struct board b;
-    b.size = 63;
+    board.size = 63;
 
     game_setup();   
 
     while (true) {
         //printf("\x1B[2J");
 
-        print_board(b.size);
+        print_board();
         roll_interact(current_player_game_loop);
 
-        check_if_won(current_player_game_loop, b.size);
+        check_if_won(current_player_game_loop);
 
         if (current_player_game_loop == player_amount-1) {
             current_player_game_loop = 0;
